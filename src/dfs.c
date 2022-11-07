@@ -4,6 +4,7 @@
 
 #include "dfs.h"
 
+#include <assert.h>
 #include <stdbool.h> /* bool, true, false */
 #include <stdio.h>   /* scanf, printf */
 #include <stdlib.h>  /* abort */
@@ -12,28 +13,40 @@ void DFT(node *root) {
     // Implement DFS
     // Hint: You can use print_node, print_tree and/or print_stack.
 
-    // I denne opgave traverserer jeg igennem træet ved hjælp af recursion.
-    // Jeg bruger kun make_node og print_node. Derfor har jeg kun lavet de
-    // funktioner.
+    // Allokerer plads til en ny stack.
+    stack *newStack = (stack *)malloc(sizeof(stack));
+    // Indsætter rooten i stacken, så stacken ikke er tom.
+    newStack->node = root;
+    newStack->next = NULL;
 
-    // Basecasen er at root er null. Altså at vi er nået til ud til enden af en
-    // gren. Hvis jeg når derud, så skal jeg stoppe og derfor returner jeg.
-    if (root == NULL) {
-        return;
+    // Kører igennem træeet, så længe min stack ikke er tom.
+    // Stacken skal gerne først være tom, når det sidste tal er printet.
+    while (!isEmpty(newStack)) {
+        // Definerer currentnode til at være toppen af stacken newStack
+        node *currentNode = top(newStack);
+
+        // Så popper jeg det øverste element i stacken.
+        newStack = pop(newStack);
+
+        // Hvis currentNode har et right child, så pusher jeg den til stacken.
+        // Her er det vigtigt, at right child pushes først. Ellers bliver
+        // rækkefølgen ikke rigtig.
+        if (currentNode->rchild != NULL) {
+            newStack = push(newStack, currentNode->rchild);
+        }
+        // Hvis currentNode har et left child, så pusher jeg den til stacken.
+        if (currentNode->lchild != NULL) {
+            newStack = push(newStack, currentNode->lchild);
+        }
+        // Printer currentNode inden loopet kører igen.
+        print_node(currentNode);
     }
-    // Hvis ikke jeg returner, så kommer jeg herned. Det betyder, at jeg som
-    // mimum står på et af de yderste tal. Derfor starter jeg med at printe.
-    print_node(root);
-
-    // Går videre mod venstre child.
-    DFT(root->lchild);
-    // Når der ikke er flere childs mod venstre, så går jeg mod højre.
-    DFT(root->rchild);
+    return;
 }
 
 node *make_node(int num, node *left, node *right) {
     // Allokerer plads og gemmer adressen i pointeren newNode.
-    node *newNode = (node *)malloc(sizeof(node));
+    node *newNode = malloc(sizeof(node));
 
     // Gemmer alt indholdet på den nye til noden, på den allokerede plads.
     newNode->num = num;
@@ -45,7 +58,17 @@ node *make_node(int num, node *left, node *right) {
     return newNode;
 }
 
-void free_node(node *p) {}
+void free_node(node *p) {
+    // Asserter først at p ikke er NULL.
+    if (p == NULL) {
+        return;
+    }
+    // Derefter freer jeg først venstre, så højre barn og til sidst noden selv.
+    free_node(p->lchild);
+    free_node(p->rchild);
+    free(p);
+    return;
+}
 
 void print_node(node *p) {
     if (p == NULL)
@@ -70,16 +93,32 @@ void print_tree(node *p, int depth) {
     if (p->rchild) print_tree(p->rchild, depth + 1);
 }
 
-stack *push(stack *topp, node *node) { return 0; }
+stack *push(stack *topp, node *node) {
+    stack *newStack = (stack *)malloc(sizeof(stack));
+    newStack->next = topp;
+    newStack->node = node;
+    return newStack;
+}
 
-bool isEmpty(stack *topp) { return false; }
+bool isEmpty(stack *topp) {
+    if (topp == NULL) {
+        return true;
+    } else {
+        return false;
+    }
+}
 
-node *top(stack *topp) { return 0; }
+node *top(stack *topp) { return topp->node; }
 
 // Utility function to pop topp
 // element from the stack
 
-stack *pop(stack *topp) { return 0; }
+stack *pop(stack *topp) {
+    assert(!isEmpty(topp));
+    stack *newStack = topp->next;
+    free(topp);
+    return newStack;
+}
 
 void print_stack(stack *topp) {
     struct stack *temp = topp;
